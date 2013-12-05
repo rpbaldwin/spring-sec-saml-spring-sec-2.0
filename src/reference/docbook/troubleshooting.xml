@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<chapter id="chapter-troubleshooting"
+	xmlns="http://docbook.org/ns/docbook" version="5.0"
+	xmlns:xl="http://www.w3.org/1999/xlink"
+	xmlns:xi="http://www.w3.org/2001/XInclude"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	xsi:schemaLocation="
+		http://docbook.org/ns/docbook http://www.docbook.org/xml/5.0/xsd/docbook.xsd
+		http://www.w3.org/1999/xlink http://www.docbook.org/xml/5.0/xsd/xlink.xsd">
+	<info>
+		<title>Troubleshooting</title>
+	</info>
+
+	<section id="chapter-troubleshooting-logging">
+	  <title>Logging</title>
+	  <para>SAML Extension uses <ulink url="http://www.slf4j.org/">SLF4J framework</ulink> for logging. The same applies to the underlaying OpenSAML
+	  library. The sample application by default uses log4j version 1.2 binding for SLF4J.</para>
+	  <para>You can enable debug logging by modifying file <emphasis>saml2-sample/src/main/resources/log4j.properties</emphasis> and adding:
+			<programlisting>log4j.logger.org.springframework.security.saml=DEBUG
+log4j.logger.org.opensaml=DEBUG
+log4j.logger.PROTOCOL_MESSAGE=DEBUG</programlisting></para>
+	  <para>For details about using other logging frameworks please consult the <ulink url="http://www.slf4j.org/manual.html">SLF4J manual</ulink>.</para>
+	</section>
+
+	<section id="chapter-troubleshooting-common-issues">
+	  <title>Common problems</title>
+	  
+    <simplesect>
+      <title>Time synchronization</title>
+      <para>Processing of SAML messages and assertions is often limited to a specific time window which e.g. prevents possibilities of replay attacks.
+      Validation of messages can fail when internal clocks of the IDP and SP machines are not synchronized. Make sure to use a       
+      <ulink url="http://www.freebsd.org/doc/handbook/network-ntp.html">time synchronization service</ulink> on all systems in the federation.</para>
+    </simplesect>
+    
+    <simplesect>
+      <title>Error 'InResponseToField doesn't correspond to sent message' during SSO</title>
+      <para>Make sure that application uses the same HttpSession during sending of the request and reception of the response. Typically, this problem arises when the auhentication request is initialized 
+      from localhost address or http scheme, while response is received at a public host name or https scheme. E.g., when initializing authentication from URL https://host:port/app/saml/login, the response 
+      must be received at https://host;port/app/saml/SSO, not http://host:port/app/saml/SSO or https://localhost:port/app/saml/SSO.</para>
+      <para>The checking of the InResponseToField can be disabled by re-configuring the context provider as follows:
+<programlisting><![CDATA[<bean id="contextProvider" class="org.springframework.security.saml.context.SAMLContextProviderImpl">
+  <property name="storageFactory">
+    <bean class="org.springframework.security.saml.storage.EmptyStorageFactory"/>
+  </property>
+</bean>]]></programlisting>
+      </para>      
+    </simplesect>
+    
+    <simplesect>
+      <title>System is redirecting to e.g. localhost address when public facing URL is different</title>
+      <para>In case you use <link linkend="configuration-metadata-sp-generation">automatic metadata generation</link> make sure to set property entityBaseURL on bean MetadataGenerator to 
+      e.g. http://server:port/yourapp or use <link linkend="configuration-metadata-sp-import">pre-generated metadata</link>.</para>      
+    </simplesect>        
+    
+    <simplesect>
+      <title>Single logout not working as expected</title>
+      <para>Make sure the &lt;security:logout.../&gt; element is not specified within the &lt;security:http&gt; element.</para>      
+    </simplesect>
+    
+    <simplesect>
+      <title>System fails during decryption or encryption of fields, e.g. with 'Failed to decrypt EncryptedData'</title>
+      <para>Make sure the <emphasis>Unlimited Strength Jurisdiction Policy Files</emphasis> are correctly installed in your JDK. See <xref linkend="quick-start-prerequisites"/> for details.</para>      
+    </simplesect>        
+    
+	</section>
+
+	<!--
+	TODO
+	- XML parsing libraries and endorsing
+	- deployment to application servers
+	-->
+</chapter>
